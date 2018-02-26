@@ -109,10 +109,10 @@ class ogl_obj_data =
       inherit Ogl_gui.Obj.ogl_obj as super
       val mutable angle=0.0;
       method create_geometry ~offset =
-        let vertex_attribute_buffers = [ (3, Gl.float, axis_vertices);
-                                         (3, Gl.float, axis_normals);
-                                         (3, Gl.float, axis_colors);
-                                       ] in
+        let vertex_attribute_buffers = [ ( [ (0,3,Gl.float,false,0,0) ], axis_vertices);
+                                         ( [ (1,3,Gl.float,false,0,0) ], axis_normals);
+                                         ( [ (2,3,Gl.float,false,0,0) ], axis_colors);
+                                ] in
         self#create_vao vertex_attribute_buffers;
         self#add_indices_to_vao axis_indices;
         Ok ()
