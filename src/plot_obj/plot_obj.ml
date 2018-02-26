@@ -17,20 +17,12 @@
  *
  *)
 
-(*
-open Utils
-open Ogl_types
-open Ogl_obj
-open Ogl_program
-open Ogl_obj
-open Ogl_widget (* for create_stylesheet *)
- *)
 open Sdl_ogl_gui
 open Atcflib
 open Tgl4
-open Ogl_gui
 
 (*f Load font to start with *)
+module Stylesheet = Ogl_gui.Stylesheet
 let sel_true            =  (fun e -> true)
 let sel_cbox            =  Stylesheet.se_is_element_id "control"
 let sel_type_button     =  Stylesheet.se_is_element_type "text_button"
@@ -42,7 +34,7 @@ let sel_state_enable    =  Stylesheet.se_is_element_state 0 1
 let sel_button_rotate = fun e -> (sel_type_button e) && (sel_cls_rotate e)
 let sel_hover_button  = fun e -> (sel_type_button e) && (sel_state_hover e)
 
-let stylesheet = create_stylesheet ()
+let stylesheet = Ogl_gui.create_stylesheet ()
 let _ = 
     Stylesheet.add_style_rule stylesheet [sel_cbox; sel_hover_button]
              [("border_color", Sv_rgb [|1.;1.;1.;|]);
@@ -266,10 +258,10 @@ let xml_additions =
                        0.0; 0.0; 1.0;|];] (* 'colors' *)
       in
       let objs = [(axes :> Ogl_gui.Obj.ogl_obj); new ogl_obj_data; ] in
-      let widget = new ogl_widget_plot app.Ogl_gui.App.Builder.stylesheet name_values in
+      let widget = new ogl_widget_plot app.Ogl_gui.AppBuilder.stylesheet name_values in
       widget#set_objs objs;
       widget#name_value_args name_values;
-      Ogl_gui.App.Builder.add_child app (widget :> Ogl_gui.Types.t_ogl_widget)
+      Ogl_gui.AppBuilder.add_child app (widget :> Ogl_gui.Types.t_ogl_widget)
     ))
 ]
 
@@ -282,7 +274,7 @@ let main () =
   let anon _ = raise (Arg.Bad "no arguments are supported") in
   Arg.parse (Arg.align options) anon usage;
   let app_creator displays = (new ogl_app_plot stylesheet displays) in
-  match (Ogl_gui.App.Builder.create_app_from_xml app_xml stylesheet xml_additions app_creator) with
+  match (Ogl_gui.AppBuilder.create_app_from_xml app_xml stylesheet xml_additions app_creator) with
     None -> 
     (
       Printf.printf "Failed to create app\n"; exit 1
