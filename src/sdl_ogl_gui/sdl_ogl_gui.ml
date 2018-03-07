@@ -83,6 +83,12 @@ module Sdl_ogl_window = struct
 end
 
 (*a SDL OpenGL application - runs an Ogl_app *)
+exception SDL_Error of string
+let sdl_result_value r = 
+  match r with
+  | Error (`Msg s) -> raise (SDL_Error s)
+  | Ok x -> x
+
 module Sdl_ogl_app = struct
     (*t type of module - SDL window and window's OpenGL context *)
     type t = {
@@ -98,10 +104,28 @@ module Sdl_ogl_app = struct
       t.win_ctxs := !(t.win_ctxs) @ [(wh,wc)];
       Ok wh
 
+    (*f add_mappings *)
+    let add_mappings _ =
+      match Sdl.rw_from_file  "gamecontrollerdb.txt" "r" with
+      | Error (`Msg s) -> Printf.printf "Opening mapping file returned '%s'\n" s
+      | Ok rw -> (
+      match Sdl.game_controller_add_mapping_from_rw rw true with
+      | Error (`Msg s) -> Printf.printf "Adding mappings returned '%s'\n" s
+      | Ok _ -> ()
+      );
+      let x = Sdl.game_controller_add_mapping "030000004c0500006802000000010000,PS3 Controller,a:b14,b:b13,back:b0,dpdown:b6,dpleft:b7,dpright:b5,dpup:b4,guide:b16,leftshoulder:b10,leftstick:b1,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b11,rightstick:b2,righttrigger:b9,rightx:a2,righty:a3,start:b3,x:b15,y:b12,platform:Mac OS X," in
+      let x = sdl_result_value x in
+      Printf.printf "Adding mapping got %b\n" x;
+      Printf.printf "Num joysticks %d\n" (sdl_result_value (Sdl.num_joysticks ()));
+      match Sdl.game_controller_open 0 with
+      | Ok gc -> Printf.printf "Found game controller %s\n" (sdl_result_value (Sdl.game_controller_name gc))
+      | _ -> ()
+
     (*f init *)
     let init app : t ogl_result =
-      Sdl.init Sdl.Init.(video + timer)
+      Sdl.init Sdl.Init.(video + timer + joystick)
      >>>= fun () ->
+      add_mappings ();
       let t = {app ; win_ctxs = ref []; start_time=Sdl.get_ticks ()} in
       let cwin ~width ~height ~title = create_window ~width:width ~height:height ~title:title t in
       app#set_create_window cwin ;
@@ -114,13 +138,15 @@ module Sdl_ogl_app = struct
       Sdl.quit ();
       Ok ()
 
-    (*f *)
+    (*f wh_wc_of_wh *)
     let wh_wc_of_wh t win_wh = 
       let find_wh acc wh_wc =
         let (wh,wc) = wh_wc in
         if (wh=win_wh) then Some wh_wc else acc
       in
       List.fold_left find_wh None !(t.win_ctxs)
+
+    (*f wh_wc_of_win *)
     let wh_wc_of_win t opt_win = 
       match opt_win with 
         None -> None 
@@ -131,6 +157,7 @@ module Sdl_ogl_app = struct
          in
          List.fold_left find_win None !(t.win_ctxs)
 
+    (*f wh_of_wid *)
     let wh_of_wid t wid = 
       match (Sdl.get_window_from_id wid) with
         Ok win -> 
@@ -141,6 +168,7 @@ module Sdl_ogl_app = struct
          List.fold_left find_win None !(t.win_ctxs)
       | _ -> None
 
+    (*f wh_of_win *)
     let wh_of_win t opt_win = 
       match opt_win with 
         None -> None 
@@ -151,6 +179,7 @@ module Sdl_ogl_app = struct
          in
          List.fold_left find_win None !(t.win_ctxs)
 
+    (*f get_mouse_wxyb *)
     let get_mouse_wxyb t () = 
       let w = wh_of_win t (Sdl.get_mouse_focus ()) in
       let (b, (x,y)) = Sdl.get_mouse_state () in
@@ -178,6 +207,9 @@ module Sdl_ogl_app = struct
       let handle_mouse t action wid which x y options =
         let w = wh_of_wid t wid in
         t.app#mouse w action (int_of_int32 which) x y options
+
+    let handle_joystick t action which axis value options =
+        t.app#joystick action (int_of_int32 which) axis value options
 
       let reshape t win w h =
         match wh_wc_of_win t win with 
@@ -208,6 +240,135 @@ module Sdl_ogl_app = struct
            | _ -> ()
            end
 
+    (*f Show event *)
+    let show_event e =
+      match Sdl.Event.(enum (get e typ)) with
+      | `App_did_enter_background -> (
+        Printf.printf "App_did_enter_background\n";
+      )     
+      | `App_did_enter_foreground -> (
+        Printf.printf "App_did_enter_foreground\n";
+      )    
+      | `App_low_memory -> (
+        Printf.printf "App_low_memory\n";
+      )     
+      | `App_terminating -> (
+        Printf.printf "App_terminating\n";
+      )     
+      | `App_will_enter_background -> (
+        Printf.printf "App_will_enter_background\n";
+      )    
+      | `App_will_enter_foreground -> (
+        Printf.printf "App_will_enter_foreground\n";
+      )     
+      | `Clipboard_update -> (
+        Printf.printf "Clipboard_update\n";
+      )    
+      | `Controller_axis_motion -> (
+        Printf.printf "Controller_axis_motion\n";
+      )     
+      | `Controller_button_down -> (
+        Printf.printf "Controller_button_down\n";
+      )    
+      | `Controller_button_up -> (
+        Printf.printf "Controller_button_up\n";
+      )     
+      | `Controller_device_added -> (
+        Printf.printf "Controller_device_added\n";
+      )    
+                  
+      | `Controller_device_remapped -> (
+        Printf.printf "Controller_device_remapped\n";
+      )     
+      | `Controller_device_removed -> (
+        Printf.printf "Controller_device_removed\n";
+      )    
+      | `Dollar_gesture -> (
+        Printf.printf "Dollar_gesture\n";
+      )     
+      | `Dollar_record -> (
+        Printf.printf "Dollar_record\n";
+      )     
+      | `Drop_file -> (
+        Printf.printf "Drop_file\n";
+      )     
+      | `Finger_down -> (
+        Printf.printf "Finger_down\n";
+      )    
+      | `Finger_motion -> (
+        Printf.printf "Finger_motion\n";
+      )     
+      | `Finger_up -> (
+        Printf.printf "Finger_up\n";
+      )     
+      | `Joy_axis_motion -> (
+        let (w,a,v) = Sdl.Event.(get e joy_axis_which, get e joy_axis_axis, get e joy_axis_value) in
+        Printf.printf "Joy_axis_motion %ld %d %d \n" w a v;
+      )     
+      | `Joy_ball_motion -> (
+        Printf.printf "Joy_ball_motion\n";
+      )    
+      | `Joy_button_down -> (
+        Printf.printf "Joy_button_down\n";
+      )     
+      | `Joy_button_up -> (
+        Printf.printf "Joy_button_up\n";
+      )     
+      | `Joy_device_added -> (
+        Printf.printf "Joy_device_added\n";
+      )    
+      | `Joy_device_removed -> (
+        Printf.printf "Joy_device_removed\n";
+      )     
+      | `Joy_hat_motion -> (
+        Printf.printf "Joy_hat_motion\n";
+      )     
+      | `Key_down -> (
+        Printf.printf "Key_down\n";
+      )     
+      | `Key_up -> (
+        Printf.printf "Key_up\n";
+      )    
+      | `Mouse_button_down -> (
+        Printf.printf "Mouse_button_down\n";
+      )     
+      | `Mouse_button_up -> (
+        Printf.printf "Mouse_button_up\n";
+      )     
+      | `Mouse_motion -> (
+        Printf.printf "Mouse_motion\n";
+      )    
+      | `Mouse_wheel -> (
+        Printf.printf "Mouse_wheel\n";
+      )     
+      | `Multi_gesture -> (
+        Printf.printf "Multi_gesture\n";
+      )     
+      | `Quit -> (
+        Printf.printf "Quit\n";
+      )     
+      | `Sys_wm_event -> (
+        Printf.printf "Sys_wm_event\n";
+      )    
+      | `Text_editing -> (
+        Printf.printf "Text_editing\n";
+      )     
+      | `Text_input -> (
+        Printf.printf "Text_input\n";
+      )     
+      | `Unknown x -> (
+        Printf.printf "Unknown %d\n" x;
+      )
+      | `User_event -> (
+        Printf.printf "User_event\n";
+      )    
+                         
+      | `Window_event -> (
+        Printf.printf "Window_event\n";
+      )
+      ;
+      ()
+    
     (*f Event loop *)
     let event_loop t : 'a ogl_result =
       let e = Sdl.Event.create () in
@@ -220,6 +381,7 @@ module Sdl_ogl_app = struct
         end;
         let has_event = Sdl.poll_event (Some e) in
         if has_event then begin
+            (*show_event e;*)
             let event_type e = Sdl.Event.(enum (get e typ)) in
             match event_type e with
             | `Quit -> Pervasives.Ok ()
@@ -259,6 +421,13 @@ module Sdl_ogl_app = struct
                                          (get e mouse_wheel_which)
                                          (get e mouse_wheel_x)
                                          (get e mouse_wheel_y)
+                                         [| |]);
+               loop None
+            | `Joy_axis_motion ->
+               Sdl.Event.(handle_joystick t (Ogl_gui.Types.Joystick_action_axis)
+                                         (get e joy_axis_which)
+                                         (get e joy_axis_axis)
+                                         (get e joy_axis_value)
                                          [| |]);
                loop None
             | `Window_event ->
