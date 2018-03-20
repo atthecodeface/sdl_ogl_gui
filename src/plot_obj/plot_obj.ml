@@ -248,14 +248,12 @@ let xml_additions =
       let axes = new Ogl_gui.Obj.ogl_obj_geometry
                      Gl.lines 6 
                      [| 0; 1; 0; 2; 0; 3; |] (* indices *)
-                     [ ba_floats [| 0.; 0.; 0.;
-                        1.; 0.; 0.;
-                        0.; 1.; 0.;
-                        0.; 0.; 1.;|]; (* vertices *)
-                     ba_floats [|1.0; 1.0; 1.0;
-                       1.0; 0.0; 0.0;
-                       0.0; 1.0; 0.0;
-                       0.0; 0.0; 1.0;|];] (* 'colors' *)
+                     [ ( [(0,3,Gl.float,false,0,6*4); (1,3,Gl.float,false,3*4,6*4)],
+                      (ba_floats [| 0.; 0.; 0.;   1.0; 1.0; 1.0;
+                        1.; 0.; 0.;   1.0; 0.0; 0.0;
+                        0.; 1.; 0.;   0.0; 1.0; 0.0;
+                        0.; 0.; 1.;   0.0; 0.0; 1.0;|] (* vertices, colors *)
+                      ) ) ]
       in
       let objs = [(axes :> Ogl_gui.Obj.ogl_obj); new ogl_obj_data; ] in
       let widget = new ogl_widget_plot app.Ogl_gui.AppBuilder.stylesheet name_values in
