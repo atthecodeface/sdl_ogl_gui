@@ -248,7 +248,7 @@ let xml_additions =
       let axes = new Ogl_gui.Obj.ogl_obj_geometry
                      Gl.lines 6 
                      [| 0; 1; 0; 2; 0; 3; |] (* indices *)
-                     [ ( [(0,3,Gl.float,false,0,6*4); (1,3,Gl.float,false,3*4,6*4)],
+                     [ ( [(0,3,Gl.float,false,6*4,0); (1,3,Gl.float,false,6*4,3*4)],
                       (ba_floats [| 0.; 0.; 0.;   1.0; 1.0; 1.0;
                         1.; 0.; 0.;   1.0; 0.0; 0.0;
                         0.; 1.; 0.;   0.0; 1.0; 0.0;
